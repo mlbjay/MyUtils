@@ -60,7 +60,7 @@ class LRUCache:
 
 
 # 多线程共享Cache，因为代码加载后(执行前)TTLCache类就发生调用
-# TODO: 是否线程安全，在Flask多线程中
+# TODO: 线程不安全，可能会击穿缓存
 class TTLCache:
     """
     ttl=None: live until removed by lru
