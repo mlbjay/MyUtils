@@ -23,20 +23,19 @@ class LRUCache:
     def __init__(self, size=100, ttl=None):
         self.cache = pylru.lrucache(size)
         self.ttl = ttl
-        self.table = set()
 
     def __len__(self):
         return len(self.cache)
 
     def __contains__(self, key):
-        return key in self.table
+        return key in self.cache
 
     def __setitem__(self, key, value):
         item = {'value': value}
         if self.ttl:
             item['time'] = int(time.time()) + self.ttl
         self.cache[key] = item
-        self.table.add(key)
+        # self.table.add(key)
 
     def __getitem__(self, key):
         item = self.cache.get(key)
@@ -48,8 +47,8 @@ class LRUCache:
             if item['time'] > int(time.time()):
                 return item['value']
             else:
+                # print(f'{key}: expire')
                 del self.cache[key]
-                self.table.remove(key)
                 raise KeyError(key)
 
     def get(self, key, default=None):
@@ -65,24 +64,30 @@ class TTLCache:
     """
     ttl=None: live until removed by lru
     ttl=int:
+    not_save=(): 不否缓存的值
     """
 
-    def __init__(self, size: int=100, ttl: int=None):
+    def __init__(self, size: int=100, ttl: int=None, not_save: tuple=()):
         self.cache = LRUCache(size=size, ttl=ttl)
+        self.not_save = not_save
 
     def __call__(self, func):
-        # print("run __call__")
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            print(f"cache {id(self.cache)} len: {len(self.cache)}")
 
             key = repr((args, kwargs))
+            # print(f"key: {key}")
+            # print(f"len: {len(self.cache)}")
             res = self.cache.get(key)
             if key in self.cache:
+                # print(f'use cache: {res}')
+                # print(f"table: {self.cache.cache.table}")
                 return res
             res = func(*args, **kwargs)
-            self.cache[key] = res
+            if res not in self.not_save:
+                # print(f'save cache: {res}')
+                self.cache[key] = res
             return res
         return wrapper
 
