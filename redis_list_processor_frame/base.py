@@ -35,12 +35,14 @@ class QueueProcessor:
                 self.logger.info(f"++++++START++++++")
                 # get task
                 data = self.get_task_from_redis()
+                if data is None:
+                    continue
                 retry = int(data.get('retry') or 0)
                 execute_timestamp = data.get('execute_timestamp')
                 execute_timestamp = int(execute_timestamp) if execute_timestamp else None
                 if execute_timestamp and int(time.time() * 1000) < execute_timestamp:
                     self.logger.info(f"重试时间未到: {data}")
-                    time.sleep(1)
+                    time.sleep(1)  # must sleep
                     self.reput_into_queue(data, retry, execute_timestamp=execute_timestamp)
                     continue
                 # true process
@@ -55,7 +57,7 @@ class QueueProcessor:
                     self.reput_into_queue(data, retry, is_sleep=True)
                 elif data:
                     self.log_fail(data)
-                time.sleep(1)
+                time.sleep(1)  # must sleep
 
     @abc.abstractmethod
     def handle(self, data: dict):
