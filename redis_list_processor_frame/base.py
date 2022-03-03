@@ -9,7 +9,6 @@ author:     lixueji
 import abc
 import csv
 import json
-import re
 import threading
 import time
 from datetime import datetime
